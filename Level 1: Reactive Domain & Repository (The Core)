@@ -1,0 +1,21 @@
+// File: src/main/java/com/analytics/model/Metric.java
+@Table("metrics")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Metric {
+    @Id
+    private Long id;
+    private String sensorName;
+    private Double value;
+    private Instant timestamp;
+    private String category; // e.g., "REVENUE", "LATENCY", "TRAFFIC"
+}
+
+// File: src/main/java/com/analytics/repository/MetricRepository.java
+@Repository
+public interface MetricRepository extends ReactiveSortingRepository<Metric, Long> {
+    // A Tailable Cursor or specific reactive query
+    @Query("SELECT * FROM metrics WHERE category = :category ORDER BY timestamp DESC")
+    Flux<Metric> findByCategory(String category);
+}
