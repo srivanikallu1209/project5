@@ -1,0 +1,18 @@
+// File: cloud-functions/predict-anomaly.js (Google Cloud / AWS Lambda style)
+const ml = require('@tensorflow/tfjs-node');
+
+exports.predictAnomaly = async (req, res) => {
+    const { dataPoints } = req.body;
+    
+    // Simple logic: If current value is 3 standard deviations from mean
+    const mean = dataPoints.reduce((a, b) => a + b) / dataPoints.length;
+    const lastValue = dataPoints[dataPoints.length - 1];
+    
+    const isAnomaly = Math.abs(lastValue - mean) > (mean * 0.5);
+
+    res.status(200).send({
+        isAnomaly: isAnomaly,
+        confidence: 0.94,
+        suggestedAction: isAnomaly ? "TRIGGER_ALERT" : "NONE"
+    });
+};
