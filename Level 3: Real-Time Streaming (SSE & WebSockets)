@@ -1,0 +1,14 @@
+// File: src/main/java/com/analytics/controller/StreamController.java
+@RestController
+@RequestMapping("/api/v1/stream")
+public class StreamController {
+
+    private final DataAggregatorService aggregator;
+
+    @GetMapping(path = "/metrics", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<AggregatedData> streamMetrics() {
+        return aggregator.getGlobalDashboardStream()
+            .doOnNext(data -> log.info("Pushing data point: {}", data.getTimestamp()))
+            .onBackpressureDrop(dropped -> log.warn("System overloaded, dropping: {}", dropped));
+    }
+}
