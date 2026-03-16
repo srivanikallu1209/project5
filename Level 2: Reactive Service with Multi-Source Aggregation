@@ -1,0 +1,24 @@
+// File: src/main/java/com/analytics/service/DataAggregatorService.java
+@Service
+public class DataAggregatorService {
+    private final MetricRepository sqlRepo;
+    private final ReactiveMongoTemplate mongoTemplate;
+    private final WebClient externalPartnerClient;
+
+    public Flux<AggregatedData> getGlobalDashboardStream() {
+        return Flux.combineLatest(
+            sqlRepo.findAll().sample(Duration.ofMillis(500)),
+            mongoTemplate.findAll(UserActivity.class).sample(Duration.ofMillis(500)),
+            fetchExternalMarketData(),
+            (metric, activity, market) -> new AggregatedData(metric, activity, market)
+        );
+    }
+
+    private Flux<Double> fetchExternalMarketData() {
+        return externalPartnerClient.get()
+            .uri("/v1/market-price")
+            .retrieve()
+            .bodyToFlux(Double.class)
+            .retryWhen(Retry.backoff(3, Duration.ofSeconds(2)));
+    }
+}
